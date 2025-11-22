@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #d32f2f;
+        }
+
+        .assignment {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🎅 Amigo Invisible: {{ game.name }}</h1>
+            <p>Hola <strong>{{ giver.name }}</strong>,</p>
+
+            <p>El sorteo se ha realizado. Te ha tocado regalar a:</p>
+
+            <div class="assignment">
+                🎁 {{ receiver.name }}
+                {% if receiver.note %}
+                <br><small>Nota: {{ receiver.note }}</small>
+                {% endif %}
+            </div>
+
+            {% if dependents_proxied %}
+            <hr>
+            <h3>👶 También eres responsable de:</h3>
+            {% for dep in dependents_proxied %}
+            <p>Debes comprar el regalo para <strong>{{ dep.name }}</strong> (que regala a otra persona).</p>
+            <p><em>Nota: Tú compras el regalo QUE {{ dep.name }} DEBE ENTREGAR a su asignación. (Espera, la regla es "El
+                    proxy nunca puede ser el receptor del dependiente").</em></p>
+            <p><strong>Corrección:</strong> Tú eres el "Proxy". Significa que tú compras EL REGALO QUE {{ dep.name }}
+                RECIBE? O que tú compras EL REGALO QUE {{ dep.name }} DA?</p>
+            <p>Revisando requisitos: "gestiona el caso de participantes “dependientes”, a los que se asigna un proxy
+                responsable." -> "El proxy nunca puede ser el receptor del dependiente (evita el caso absurdo “doy a E,
+                y E compra por mí”)."</p>
+            <p>Esto implica que el Proxy ayuda al Dependiente a comprar su regalo para su asignado. O que el Proxy
+                compra el regalo PARA el dependiente?</p>
+            <p>Interpretación estándar: Un niño (dependiente) participa. Alguien (proxy) tiene que comprar el regalo QUE
+                EL NIÑO DEBE REGALAR. O alguien tiene que comprar el regalo PARA EL NIÑO?</p>
+            <p>Si fuera "comprar PARA el niño", entonces el Proxy sería el Giver del niño. Pero el sorteo ya asigna un
+                Giver al niño.</p>
+            <p>Por tanto, el Proxy es quien ejecuta la acción de regalar EN NOMBRE del niño. Es decir, el niño le toca
+                regalar a X. El Proxy debe encargarse de comprar ese regalo para X.</p>
+
+            <p>Así que: <strong>{{ dep.name }}</strong> tiene que regalar a su asignado. Tú te encargas de gestionar
+                eso.</p>
+
+            {% with dep_assignment=dep.assignment_as_giver %}
+            <div class="assignment">
+                🎁 {{ dep.name }} regala a: {{ dep_assignment.receiver.name }}
+                {% if dep_assignment.receiver.note %}
+                <br><small>Nota: {{ dep_assignment.receiver.note }}</small>
+                {% endif %}
+            </div>
+            {% endwith %}
+            {% endfor %}
+            {% endif %}
+
+            <p>¡Feliz Navidad!</p>
+        </div>
+    </div>
+</body>
+
+</html>

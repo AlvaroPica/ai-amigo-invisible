@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Actualizar Email de {{ object.name }}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Guardar y Volver</button>
+    <a href="{% url 'email_errors' object.game.pk %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

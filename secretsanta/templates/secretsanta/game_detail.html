@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'game_list' %}" class="btn btn-outline-secondary mb-3">&larr; Volver</a>
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1>{{ game.name }}</h1>
+            <p class="lead">{{ game.description }}</p>
+            <span
+                class="badge bg-{% if game.status == 'draft' %}secondary{% elif game.status == 'drawn' %}primary{% else %}info{% endif %}">
+                {{ game.get_status_display }}
+            </span>
+        </div>
+        <div>
+            {% if game.status == 'draft' %}
+            <a href="{% url 'game_edit' game.pk %}" class="btn btn-outline-primary">Editar Detalles</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Jugadores ({{ players.count }})</h5>
+                {% if game.status == 'draft' %}
+                <div>
+                    <a href="{% url 'player_add' game.pk %}" class="btn btn-sm btn-success">➕ Añadir Jugador</a>
+                    <a href="{% url 'player_import' game.pk %}" class="btn btn-sm btn-primary">📤 Importar Jugadores</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if players %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Dependiente</th>
+                            {% if game.status == 'draft' %}<th>Acciones</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr>
+                            <td>{{ player.name }}</td>
+                            <td>{{ player.email }}</td>
+                            <td>{% if player.is_dependent %}✅{% endif %}</td>
+                            {% if game.status == 'draft' %}
+                            <td>
+                                <a href="{% url 'player_edit' player.pk %}"
+                                    class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="{% url 'player_delete' player.pk %}"
+                                    class="btn btn-sm btn-outline-danger">Borrar</a>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">No hay jugadores aún.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if game.status == 'draft' %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Excepciones ({{ forbidden_pairs.count }})</h5>
+                <a href="{% url 'forbidden_add' game.pk %}" class="btn btn-sm btn-warning">Añadir Excepción</a>
+            </div>
+            <div class="card-body">
+                {% if forbidden_pairs %}
+                <ul class="list-group">
+                    {% for pair in forbidden_pairs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            {{ pair.giver }} &rarr; {{ pair.receiver }}
+                            {% if pair.is_reciprocal %}
+                            <span class="badge bg-info text-dark ms-2">Recíproca</span>
+                            {% endif %}
+                        </span>
+                        <form action="{% url 'forbidden_delete' pair.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">X</button>
+                        </form>
+                    </li>
+                    {% if pair.is_reciprocal %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light text-muted">
+                        <span>
+                            {{ pair.receiver }} &rarr; {{ pair.giver }}
+                            <span class="badge bg-secondary ms-2">Implícita</span>
+                        </span>
+                        <span class="text-muted small">(Vinculada a la anterior)</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No hay restricciones definidas.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones</h5>
+            </div>
+            <div class="card-body">
+                {% if game.status == 'draft' %}
+                <p>Cuando tengas todos los jugadores (mínimo 3) y restricciones listas, lanza el sorteo.</p>
+                <form action="{% url 'game_draw' game.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100" {% if players.count < 3 %}disabled{% endif %}>
+                        🎲 Realizar Sorteo
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-success">
+                    ¡Sorteo realizado!
+                </div>
+                <p>Resultados disponibles.</p>
+
+                <form action="{% url 'game_reset' game.pk %}" method="post" class="mb-3"
+                    onsubmit="return confirm('¿Estás seguro? Se borrarán todas las asignaciones.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        🗑️ Borrar Sorteo (Volver a Draft)
+                    </button>
+                </form>
+
+                <form action="{% url 'game_send_emails' game.pk %}" method="post" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">
+                        📧 Enviar Emails a Todos
+                    </button>
+                </form>
+
+                {% if game.status == 'emails_error' %}
+                <a href="{% url 'email_errors' game.pk %}" class="btn btn-danger w-100 mb-3">
+                    ⚠️ Ver Errores de Envío
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if game.status != 'draft' %}
+<div class="row mt-4">
+    <div class="col-12">
+        {% if can_view_results %}
+        <h3>Resultados del Sorteo</h3>
+        <div class="alert alert-info">
+            <strong>🔒 Vista de Administrador:</strong> Solo tú (superusuario) puedes ver estos resultados.
+        </div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Quien Regala (Giver)</th>
+                    <th>A Quien Regala (Receiver)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                    <td>{{ assignment.giver.name }}</td>
+                    <td>{{ assignment.receiver.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if proxies %}
+        <h4 class="mt-4">Proxies para Dependientes</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Dependiente</th>
+                    <th>Proxy (Quien compra por él)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proxy in proxies %}
+                <tr>
+                    <td>{{ proxy.dependent.name }}</td>
+                    <td>{{ proxy.proxy.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-success">
+            <h4>✅ Sorteo Completado</h4>
+            <p>El sorteo se ha realizado correctamente y los emails han sido enviados a los participantes.</p>
+            <p><strong>🔒 Nota de Privacidad:</strong> Los resultados del sorteo están ocultos para mantener la
+                sorpresa. Solo los participantes reciben su asignación por email.</p>
+            <p class="mb-0"><em>Si necesitas ver los resultados, contacta al administrador del sistema.</em></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

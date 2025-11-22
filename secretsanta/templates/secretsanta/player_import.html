@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Importar Jugadores</h1>
+<h5>Juego: {{ game.name }}</h5>
+
+<div class="alert alert-info">
+    <h5>📋 Formato del archivo CSV</h5>
+    <p>El archivo debe tener las siguientes columnas (con encabezado):</p>
+    <ul>
+        <li><strong>nombre</strong>: Nombre del jugador (obligatorio)</li>
+        <li><strong>email</strong>: Email del jugador (obligatorio)</li>
+        <li><strong>dependiente</strong>: "si" o "no" (opcional, por defecto "no")</li>
+        <li><strong>nota</strong>: Nota opcional (opcional)</li>
+    </ul>
+
+    <p><strong>Ejemplo:</strong></p>
+    <pre>nombre,email,dependiente,nota
+Juan Pérez,juan@example.com,no,Le gusta el fútbol
+María García,maria@example.com,no,
+Pedro López,pedro@example.com,si,Es un niño de 8 años</pre>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label for="csv_file" class="form-label">Selecciona archivo CSV</label>
+        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-danger">
+        <h5>Errores encontrados:</h5>
+        <ul>
+            {% for error in errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">📤 Importar Jugadores</button>
+    <a href="{% url 'game_detail' game.pk %}" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<div class="mt-4">
+    <h5>💡 Consejos</h5>
+    <ul>
+        <li>Puedes crear el archivo en Excel o Google Sheets y guardarlo como CSV</li>
+        <li>Asegúrate de que el archivo esté codificado en UTF-8</li>
+        <li>Los jugadores duplicados (mismo email) serán ignorados</li>
+    </ul>
+</div>
+{% endblock %}

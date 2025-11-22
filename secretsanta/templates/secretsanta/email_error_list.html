@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Errores de Envío de Email</h1>
+<h5>Juego: {{ game.name }}</h5>
+<a href="{% url 'game_detail' game.pk %}" class="btn btn-secondary mb-3">Volver al Juego</a>
+
+{% if logs %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Jugador</th>
+            <th>Email Intentado</th>
+            <th>Error</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.player.name }}</td>
+            <td>{{ log.to_email }}</td>
+            <td class="text-danger">{{ log.error_message }}</td>
+            <td>
+                <a href="{% url 'player_update_email' log.player.pk %}" class="btn btn-sm btn-warning">Cambiar Email</a>
+                <form action="{% url 'email_retry' log.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-primary">Reintentar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-success">No hay errores pendientes.</div>
+{% endif %}
+{% endblock %}
