@@ -56,5 +56,8 @@ Aplicación web para gestionar juegos de Amigo Invisible.
 
 Para ejecutar los tests unitarios:
 ```bash
-uv run python manage.py test secretsanta.tests
-```
+uv run python manage.py test secretsanta.testså
+
+usuarios prueba:
+admin pikas123
+Alvarito Hola1986?
